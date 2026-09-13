@@ -13,6 +13,7 @@ const oidcEnvironmentSchema = z.object({
   ARTIFACT_SERVER_BOOTSTRAP_ADMIN_EMAIL: z.email().optional(),
   ARTIFACT_SERVER_OIDC_CLIENT_ID: z.string().min(1).optional(),
   ARTIFACT_SERVER_OIDC_ISSUER: z.string().min(1).optional(),
+  ARTIFACT_SERVER_OIDC_MCP_AUDIENCE: z.string().min(1).optional(),
   ARTIFACT_SERVER_OIDC_SCOPES: z.string().min(1).optional(),
   ARTIFACT_SERVER_ORIGIN: z.url().optional(),
 });
@@ -24,6 +25,8 @@ export interface OidcConfiguration {
   readonly clientId: string;
   readonly clientSecret: Redacted.Redacted | null;
   readonly issuer: string;
+  /** Set it when the issuer cannot bind the MCP URL into `aud`. */
+  readonly mcpAudience: string | null;
   readonly scopes: string;
 }
 
@@ -41,6 +44,7 @@ export async function loadOidcConfiguration(
     clientSecret === null &&
     parsed.ARTIFACT_SERVER_OIDC_CLIENT_ID === undefined &&
     parsed.ARTIFACT_SERVER_OIDC_ISSUER === undefined &&
+    parsed.ARTIFACT_SERVER_OIDC_MCP_AUDIENCE === undefined &&
     parsed.ARTIFACT_SERVER_OIDC_SCOPES === undefined
   ) {
     return null;
@@ -53,7 +57,7 @@ export async function loadOidcConfiguration(
   ];
   if (requiredValues.some((value) => value === undefined)) {
     throw new Error(
-      "Generic OIDC authentication requires ARTIFACT_SERVER_ORIGIN, ARTIFACT_SERVER_BOOTSTRAP_ADMIN_EMAIL, ARTIFACT_SERVER_OIDC_ISSUER, and ARTIFACT_SERVER_OIDC_CLIENT_ID. ARTIFACT_SERVER_OIDC_CLIENT_SECRET or ARTIFACT_SERVER_OIDC_CLIENT_SECRET_FILE and ARTIFACT_SERVER_OIDC_SCOPES are optional.",
+      "Generic OIDC authentication requires ARTIFACT_SERVER_ORIGIN, ARTIFACT_SERVER_BOOTSTRAP_ADMIN_EMAIL, ARTIFACT_SERVER_OIDC_ISSUER, and ARTIFACT_SERVER_OIDC_CLIENT_ID. ARTIFACT_SERVER_OIDC_CLIENT_SECRET or ARTIFACT_SERVER_OIDC_CLIENT_SECRET_FILE, ARTIFACT_SERVER_OIDC_SCOPES, and ARTIFACT_SERVER_OIDC_MCP_AUDIENCE are optional.",
     );
   }
   return {
@@ -67,6 +71,7 @@ export async function loadOidcConfiguration(
       requireString(parsed.ARTIFACT_SERVER_OIDC_ISSUER),
       "ARTIFACT_SERVER_OIDC_ISSUER",
     ),
+    mcpAudience: parsed.ARTIFACT_SERVER_OIDC_MCP_AUDIENCE ?? null,
     scopes: parsed.ARTIFACT_SERVER_OIDC_SCOPES ?? defaultOidcScopes,
   };
 }

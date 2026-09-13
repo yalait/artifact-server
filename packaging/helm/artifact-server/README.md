@@ -135,6 +135,12 @@ the chart mounts it as a file. `identity.oidcScopes` overrides the default
 `openid email profile`. The chart rejects a partial OIDC configuration, and an
 OIDC client secret or scope list without an issuer and client.
 
+The same issuer also protects the MCP endpoint: agents may present an end-user
+access token instead of an API key, and the server binds each call to the person
+who obtained it. Tokens must name `configuration.applicationOrigin` followed by
+`/mcp` in `aud`. When the provider cannot bind that URL, set
+`identity.oidcMcpAudience` to the value it does bind.
+
 One installation has one browser-login provider. The chart rejects values that
 configure neither provider or configure WorkOS and OIDC together.
 

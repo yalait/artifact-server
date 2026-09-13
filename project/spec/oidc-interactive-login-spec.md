@@ -34,6 +34,7 @@ New variables, mirroring Workspaces' `OIDC_*` names under this repo's `ARTIFACT_
 | `ARTIFACT_SERVER_OIDC_CLIENT_ID` | yes | Non-empty string. |
 | `ARTIFACT_SERVER_OIDC_CLIENT_SECRET` / `…_FILE` | no | Optional: a public client using PKCE alone is valid, as in Workspaces. When set, sent as `client_secret` in the token-request form body (`client_secret_post`, what Workspaces does). |
 | `ARTIFACT_SERVER_OIDC_SCOPES` | no | Default `"openid email profile"` (Workspaces' default). |
+| `ARTIFACT_SERVER_OIDC_MCP_AUDIENCE` | no | Default `<origin>/mcp`: the audience an MCP access token must name. Set it when the issuer binds a different value, such as the client ID. See [0028](./decisions/0028-oidc-mcp-oauth.md). |
 | `ARTIFACT_SERVER_ORIGIN` | yes (shared) | Already required for WorkOS login; the redirect URI is exactly `<origin>/auth/callback`. |
 | `ARTIFACT_SERVER_BOOTSTRAP_ADMIN_EMAIL` | yes (shared) | Already required for WorkOS login; unchanged meaning. |
 

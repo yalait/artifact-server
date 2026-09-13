@@ -43,6 +43,7 @@ identity:
   workosIssuer: ""
   oidcClientId: ""
   oidcIssuer: ""
+  oidcMcpAudience: ""
   oidcScopes: ""
 
 serviceAccount:

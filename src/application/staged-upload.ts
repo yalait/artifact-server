@@ -46,6 +46,7 @@ import {
 } from "./project-management.js";
 
 const uploadLifetimeMilliseconds = 60 * 60 * 1_000;
+const singleWriteDeadlineMilliseconds = 10 * 60 * 1_000;
 
 /** Input for creating a principal-bound staged upload. */
 export interface CreateStagedUploadCommand {
@@ -56,11 +57,11 @@ export interface CreateStagedUploadCommand {
   readonly routingMode?: RoutingMode;
 }
 
-/** Input for streaming one file into a staged upload slot. */
+/** Input for streaming one file into the staged upload slot its URL names. */
 export interface UploadStagedFileCommand {
   readonly body: ReadableStream<Uint8Array>;
-  readonly principal: Principal;
-  readonly projectId?: string | null;
+  readonly ownerId: string;
+  readonly projectId: string;
   readonly storageToken: string;
   readonly uploadId: string;
 }
@@ -261,15 +262,10 @@ function makeStagedUploadService(
     function*(
     command: UploadStagedFileCommand,
   ): Effect.fn.Return<StagedUpload, StagedUploadFailure> {
-      yield* authorization.requirePublicationPreparation(command.principal);
-      const project = yield* projects.resolveActiveProject({
-        principal: command.principal,
-        projectId: command.projectId ?? null,
-      });
       const upload = yield* requiredUpload(
-        project.id,
+        command.projectId,
         command.uploadId,
-        command.principal.id,
+        command.ownerId,
       );
       const uploadStartedAt = yield* dependencies.clock.now;
       yield* ensureUploadAcceptsFiles(upload, uploadStartedAt);
@@ -282,7 +278,15 @@ function makeStagedUploadService(
         });
       }
 
-      const signal = abortSignalUntil(upload.expiresAt, uploadStartedAt);
+      // An upload stays open for an hour, but one write must not hold a
+      // connection that long.
+      const writeDeadline = DateTime.formatIso(
+        DateTime.addDuration(uploadStartedAt, singleWriteDeadlineMilliseconds),
+      );
+      const signal = abortSignalUntil(
+        writeDeadline < upload.expiresAt ? writeDeadline : upload.expiresAt,
+        uploadStartedAt,
+      );
       yield* dependencies.staging.put({
         body: command.body,
         sha256: file.entry.sha256,
@@ -295,9 +299,9 @@ function makeStagedUploadService(
         : error)));
       const uploadedAt = DateTime.formatIso(yield* dependencies.clock.now);
       return yield* dependencies.uploads.markStagedFileUploaded(
-        project.id,
+        upload.projectId,
         upload.id,
-        command.principal.id,
+        upload.principalId,
         file.storageToken,
         uploadedAt,
       );

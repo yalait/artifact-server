@@ -506,12 +506,12 @@ requirements:
 
   - id: PUB-001
     kind: behavior
-    behavior: Publishing starts with an expiring upload record and a unique staging location bound to the principal and installation.
+    behavior: Publishing starts with an expiring upload record and a unique staging location bound to the principal and installation. The upload URL names the project, the owner, and one unguessable per-file token, and authorizes writing only the bytes whose digest the owner declared, so a client that never sees the owner's credential can still finish the upload.
     owner: publishing
     source: {file: artifact-server-product-spec.html, anchor: architecture}
     acceptance:
       behavior: {id: PUB-001-B, description: "Create an upload and verify its principal, installation, unique staging location, and expiration."}
-      failure: {id: PUB-001-F, description: "Another principal or installation cannot read, append, commit, or renew the staged upload."}
+      failure: {id: PUB-001-F, description: "Another principal or installation cannot read, commit, or renew the staged upload, and cannot append to it without the exact owner and per-file token carried in the upload URL."}
     deployments: *all
     status: behavior_verified
     depends_on: [AUTH-008]
